@@ -11,7 +11,7 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mindly')),
+      extendBody: true,
       body: navigationShell,
       bottomNavigationBar: BottomNavbar(
         currentIndex: navigationShell.currentIndex,
