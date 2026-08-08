@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mindly/app/scaffold/app_scaffold.dart';
@@ -8,11 +9,14 @@ import 'package:mindly/feature/feed/data/link_repository.dart';
 import 'package:mindly/feature/feed/presentation/bloc/feed_cubit.dart';
 import 'package:mindly/feature/shelves/data/folders_repository.dart';
 import 'package:mindly/feature/shelves/presenation/bloc/folders_cubit.dart';
-import '../../feature/feed/link_detail_screen.dart';
+import '../../feature/feed/presentation/link_detail_screen.dart';
 import '../../feature/feed/presentation/feed_screen.dart';
 import '../../feature/shelves/presenation/folder_details_screen.dart';
 import '../../feature/shelves/presenation/folders_screen.dart';
 import '../../feature/sift/presentation/sift_screen.dart';
+
+final GlobalKey<ScaffoldMessengerState> appScaffoldMessengerKey =
+GlobalKey<ScaffoldMessengerState>();
 
 class AppRouter {
   static final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -29,23 +33,22 @@ class AppRouter {
         branches: [
           StatefulShellBranch(
             routes: [
-              GoRoute(
-                path: RouteConstants.feed,
-                builder: (context, state) => BlocProvider(
+              ShellRoute(
+                builder: (context, state, child) => BlocProvider(
                   create: (_) => FeedCubit(LinkRepository.instance),
-                  child: const FeedScreen(),
+                  child: child,
                 ),
-              ),
-
-              GoRoute(
-                path: RouteConstants.linkDetail,
-                builder: (context, state) {
-                  final link = state.extra as Link;
-                  return LinkDetailScreen(link: link);
-                },
+                routes: [
+                  GoRoute(
+                    path: RouteConstants.feed,
+                    builder: (context, state) => const FeedScreen(),
+                  ),
+                ],
               ),
             ],
           ),
+
+
           StatefulShellBranch(
             routes: [
               ShellRoute(
@@ -78,6 +81,18 @@ class AppRouter {
             ],
           ),
         ],
+      ),
+
+      GoRoute(
+        path: RouteConstants.linkDetail,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          final link = state.extra as Link;
+          return BlocProvider(
+            create: (_) => FeedCubit(LinkRepository.instance),
+            child: LinkDetailScreen(link: link),
+          );
+        },
       ),
     ],
   );

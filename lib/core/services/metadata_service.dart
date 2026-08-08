@@ -120,6 +120,8 @@ class MetadataService {
         }
       }
 
+      print('metadata: title=${metadata?.title}, image=${metadata?.image}, desc=${metadata?.desc}');
+
       return (
       title: metadata?.title,
       imageUrl: imageUrl,

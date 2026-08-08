@@ -57,6 +57,28 @@ class LinkRepository {
     return (_db.delete(_db.links)..where((t) => t.id.equals(id))).go();
   }
 
+  /// Get a single link by its id, used for caching before delete (undo support)
+  Future<Link?> getLinkById(int id) {
+    return (_db.select(_db.links)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+  }
+
+  /// Reinsert a previously deleted link with the same id (undo support)
+  Future<void> restoreLink(Link link) {
+    return _db.into(_db.links).insertOnConflictUpdate(
+      LinksCompanion(
+        id: Value(link.id),
+        url: Value(link.url),
+        platform: Value(link.platform),
+        title: Value(link.title),
+        imageUrl: Value(link.imageUrl),
+        imageWidth: Value(link.imageWidth),
+        imageHeight: Value(link.imageHeight),
+        createdAt: Value(link.createdAt),
+      ),
+    );
+  }
+
   /// Get ALL links ordered by creation date (newest first)
   // Future<List<Link>> getAllLinks() {
   //   return (_db.select(_db.links)

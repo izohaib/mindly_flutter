@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindly/feature/feed/data/link_repository.dart';
 import 'package:mindly/core/database/app_database.dart';
 import 'package:mindly/feature/feed/presentation/bloc/feed_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FeedCubit extends Cubit<FeedState> {
   final LinkRepository linkRepository;
@@ -40,6 +41,7 @@ class FeedCubit extends Cubit<FeedState> {
       },
     );
   }
+
 
   /// Select a platform filter and show only links from that platform
   Future<void> selectFilter(String platform) async {
@@ -111,4 +113,25 @@ class FeedCubit extends Cubit<FeedState> {
       print('❌ Error searching: $e');
     }
   }
+
+  Link? _lastDeletedLink;
+
+  Future<void> deleteLink(int id) async {
+    _lastDeletedLink = await linkRepository.getLinkById(id);
+    await linkRepository.deleteLink(id);
+  }
+
+  Future<void> undoDelete() async {
+    if (_lastDeletedLink == null) return;
+    await linkRepository.restoreLink(_lastDeletedLink!);
+    _lastDeletedLink = null;
+  }
+
+
+  @override
+  Future<void> close() {
+    linksSubscription?.cancel();
+    return super.close();
+  }
+
 }
