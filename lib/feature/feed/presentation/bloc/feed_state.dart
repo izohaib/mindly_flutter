@@ -12,46 +12,50 @@ class FeedLoading extends FeedState {
   const FeedLoading();
 }
 
-class FeedSuccess extends FeedState {
+final class FeedSuccess extends FeedState {
   final List<Link> links;
-  final String searchQuery;
+  final List<Link> platformLinks; // platform-filtered, for search query
+  final List<Link> filteredPlatformLinks;  // for platform filtered chips
+  final List<String> availablePlatforms;
+  final String selectedFilter;
   final bool isSearching;
-  final String? selectedFilter;
+  final String searchQuery;
 
   const FeedSuccess({
     required this.links,
-    this.searchQuery = '',
-    this.isSearching = false,
-    this.selectedFilter,
+    required this.platformLinks,
+    required this.filteredPlatformLinks,
+    required this.availablePlatforms,
+    required this.selectedFilter,
+    required this.isSearching,
+    required this.searchQuery,
   });
-
-  List<Link> get filteredLinks {
-    if (searchQuery.isEmpty) return links;
-
-    return links.where((link) {
-      return (link.title ?? '')
-          .toLowerCase()
-          .contains(searchQuery.toLowerCase());
-    }).toList();
-  }
 
   FeedSuccess copyWith({
     List<Link>? links,
-    String? searchQuery,
-    bool? isSearching,
+    List<Link>? platformLinks,
+    List<Link>? filteredPlatformLinks,
+    List<String>? availablePlatforms,
     String? selectedFilter,
+    bool? isSearching,
+    String? searchQuery,
   }) {
     return FeedSuccess(
       links: links ?? this.links,
-      searchQuery: searchQuery ?? this.searchQuery,
-      isSearching: isSearching ?? this.isSearching,
+      platformLinks: platformLinks ?? this.platformLinks,
+      filteredPlatformLinks:
+      filteredPlatformLinks ?? this.filteredPlatformLinks,
+      availablePlatforms: availablePlatforms ?? this.availablePlatforms,
       selectedFilter: selectedFilter ?? this.selectedFilter,
+      isSearching: isSearching ?? this.isSearching,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 }
 
+
 class FeedError extends FeedState {
   final String message;
 
-  const FeedError(this.message);
+  const FeedError({required this.message});
 }

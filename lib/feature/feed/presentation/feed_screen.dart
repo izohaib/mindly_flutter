@@ -6,7 +6,8 @@ import 'package:mindly/feature/feed/presentation/widgets/feed_app_bar.dart';
 import 'package:mindly/feature/feed/presentation/widgets/filter_chips_panel.dart';
 import 'package:mindly/feature/feed/presentation/widgets/link_card.dart';
 import '../../../core/theme/colors.dart';
-import 'bloc/feed_bloc.dart';
+import '../data/link_repository.dart';
+import 'bloc/feed_cubit.dart';
 import 'bloc/feed_state.dart';
 
 class FeedScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class FeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => FeedCubit(appDatabase: AppDatabase.instance),
+      create: (_) => FeedCubit(LinkRepository.instance),
       child: const _FeedView(),
     );
   }
@@ -26,30 +27,36 @@ class _FeedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<FeedCubit>().state;
+    final hasActiveFilter =
+        state is FeedSuccess && state.selectedFilter != 'All';
+    final isSearchingState =
+        state is FeedSuccess && state.isSearching;
+
     return Column(
       children: [
         CustomAppBar(
-          onSearchChanged: (query) {
-            context.read<FeedCubit>().search(query);
-          },
-          onSearchFocusChanged: (focused) {
-            print("focused: ${focused}");
-            context.read<FeedCubit>().setSearching(focused);
-          },
-
+          onSearchChanged: (query) => context.read<FeedCubit>().search(query),
+          onSearchFocusChanged: (focused) =>
+              context.read<FeedCubit>().isSearching(focused),
           onAddButtonTap: () {
             // TODO: navigate to create-link/note screen
           },
+          onClearFilter: () => context.read<FeedCubit>().selectFilter('All'),
+          isSearchingState: isSearchingState,
+          hasActiveFilter: hasActiveFilter,
         ),
         Expanded(
           child: Container(
             color: AppColors.background,
-            child: BlocBuilder<FeedCubit, FeedState>(
-              builder: (context, state) {
+            child: Builder(
+              builder: (context) {
                 if (state is FeedInitial || state is FeedLoading) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                     ),
                   );
                 }
@@ -64,31 +71,68 @@ class _FeedView extends StatelessWidget {
                 }
 
                 if (state is FeedSuccess) {
-                  if (state.isSearching) {
+                  if (state.isSearching && state.searchQuery.isEmpty && state.selectedFilter == "All") {
                     return FilterChipsPanel(
-                      options: const [
-                        'All',
-                        'Recently Added',
-                        'Favorites',
-                        'Unsorted',
-                      ],
+                      options: ['All', ...state.availablePlatforms],
                       selected: state.selectedFilter,
-                      onSelected: (value) {
-                        context.read<FeedCubit>().selectFilter(value);
+                      onSelected: (selectedPlatform) {
+                        FocusScope.of(context).unfocus();
+                        context.read<FeedCubit>().selectFilter(selectedPlatform);
                       },
                     );
                   }
 
-                  final links = state.filteredLinks;
+                  final links = state.filteredPlatformLinks;
 
-                  if (links.isEmpty) {
-                    return Center(
-                      child: Text(
-                        state.searchQuery.isEmpty
-                            ? 'No links saved yet'
-                            : 'No results for "${state.searchQuery}"',
-                        style: const TextStyle(color: AppColors.onSecondary),
-                      ),
+                  if (state.selectedFilter != 'All') {
+                    return Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Chip(
+                              label: Text(state.selectedFilter),
+                              labelStyle: const TextStyle(
+                                color: AppColors.onPrimary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              backgroundColor: AppColors.primary,
+                              deleteIcon: const Icon(
+                                Icons.close,
+                                size: 18,
+                                color: AppColors.onPrimary,
+                              ),
+                              onDeleted: () =>
+                                  context.read<FeedCubit>().selectFilter('All'),
+                              side: const BorderSide(
+                                color: AppColors.outline,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: links.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No videos for this filter',
+                                    style: TextStyle(
+                                      color: AppColors.onSecondary,
+                                    ),
+                                  ),
+                                )
+                              : MasonryGridView.count(
+                                  padding: const EdgeInsets.all(12),
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                  itemCount: links.length,
+                                  itemBuilder: (context, index) =>
+                                      LinkFeed(link: links[index]),
+                                ),
+                        ),
+                      ],
                     );
                   }
 
@@ -98,9 +142,8 @@ class _FeedView extends StatelessWidget {
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
                     itemCount: links.length,
-                    itemBuilder: (context, index) {
-                      return LinkFeed(link: links[index]);
-                    },
+                    itemBuilder: (context, index) =>
+                        LinkFeed(link: links[index]),
                   );
                 }
                 return const SizedBox.shrink();

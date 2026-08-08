@@ -7,5 +7,9 @@ class Links extends Table {
   TextColumn get imageUrl => text().nullable()();
   RealColumn get imageWidth => real().nullable()();
   RealColumn get imageHeight => real().nullable()();
+
+  // NOT nullable - every link MUST have a platform value
+  TextColumn get platform => text().withDefault(const Constant('other'))();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

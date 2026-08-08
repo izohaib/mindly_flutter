@@ -6,14 +6,19 @@ class CustomAppBar extends StatefulWidget {
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<bool> onSearchFocusChanged;
   final VoidCallback onAddButtonTap;
+  final VoidCallback onClearFilter;
+  final bool hasActiveFilter;
+  final bool isSearchingState;
 
   const CustomAppBar({
     super.key,
     required this.onSearchChanged,
     required this.onSearchFocusChanged,
     required this.onAddButtonTap,
+    required this.onClearFilter,
+    required this.hasActiveFilter,
+    required this.isSearchingState
   });
-
   @override
   State<CustomAppBar> createState() => CustomAppBarState();
 }
@@ -98,11 +103,12 @@ class CustomAppBarState extends State<CustomAppBar> {
                         ),
                       ),
                     ),
-                    if (_controller.text.isNotEmpty)
+                    if (_controller.text.isNotEmpty || widget.isSearchingState == true)
                       GestureDetector(
                         onTap: () {
                           _controller.clear();
                           widget.onSearchChanged('');
+                          widget.onClearFilter(); // reset platform filter
                           _focusNode.unfocus();
                           setState(() {});
                         },
@@ -117,6 +123,8 @@ class CustomAppBarState extends State<CustomAppBar> {
               ),
             ),
             const SizedBox(width: 8),
+
+            if(widget.isSearchingState != true)
             SizedBox(
               height: 52,
               child: FilledButton(

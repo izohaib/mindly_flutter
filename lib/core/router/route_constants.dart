@@ -1,6 +1,13 @@
 class RouteConstants {
-  static const String feed = '/splash';
-  static const String shelves = '/home';
-  static const String shift = '/profile';
+  // Feed screen routes
+  static const String feed = '/feed';
+  static const String linkDetail = '$feed/link-detail';
+
+  // Folder Screen routes
+  static const String folder = '/shelve';
+  static const String folderDetail = '$folder/detail';
+
+
+  static const String sift = '/sift';
 
 }

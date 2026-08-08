@@ -72,6 +72,18 @@ class $LinksTable extends Links with TableInfo<$LinksTable, Link> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _platformMeta = const VerificationMeta(
+    'platform',
+  );
+  @override
+  late final GeneratedColumn<String> platform = GeneratedColumn<String>(
+    'platform',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('other'),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -92,6 +104,7 @@ class $LinksTable extends Links with TableInfo<$LinksTable, Link> {
     imageUrl,
     imageWidth,
     imageHeight,
+    platform,
     createdAt,
   ];
   @override
@@ -144,6 +157,12 @@ class $LinksTable extends Links with TableInfo<$LinksTable, Link> {
         ),
       );
     }
+    if (data.containsKey('platform')) {
+      context.handle(
+        _platformMeta,
+        platform.isAcceptableOrUnknown(data['platform']!, _platformMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -183,6 +202,10 @@ class $LinksTable extends Links with TableInfo<$LinksTable, Link> {
         DriftSqlType.double,
         data['${effectivePrefix}image_height'],
       ),
+      platform: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}platform'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -203,6 +226,7 @@ class Link extends DataClass implements Insertable<Link> {
   final String? imageUrl;
   final double? imageWidth;
   final double? imageHeight;
+  final String platform;
   final DateTime createdAt;
   const Link({
     required this.id,
@@ -211,6 +235,7 @@ class Link extends DataClass implements Insertable<Link> {
     this.imageUrl,
     this.imageWidth,
     this.imageHeight,
+    required this.platform,
     required this.createdAt,
   });
   @override
@@ -230,6 +255,7 @@ class Link extends DataClass implements Insertable<Link> {
     if (!nullToAbsent || imageHeight != null) {
       map['image_height'] = Variable<double>(imageHeight);
     }
+    map['platform'] = Variable<String>(platform);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -250,6 +276,7 @@ class Link extends DataClass implements Insertable<Link> {
       imageHeight: imageHeight == null && nullToAbsent
           ? const Value.absent()
           : Value(imageHeight),
+      platform: Value(platform),
       createdAt: Value(createdAt),
     );
   }
@@ -266,6 +293,7 @@ class Link extends DataClass implements Insertable<Link> {
       imageUrl: serializer.fromJson<String?>(json['imageUrl']),
       imageWidth: serializer.fromJson<double?>(json['imageWidth']),
       imageHeight: serializer.fromJson<double?>(json['imageHeight']),
+      platform: serializer.fromJson<String>(json['platform']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -279,6 +307,7 @@ class Link extends DataClass implements Insertable<Link> {
       'imageUrl': serializer.toJson<String?>(imageUrl),
       'imageWidth': serializer.toJson<double?>(imageWidth),
       'imageHeight': serializer.toJson<double?>(imageHeight),
+      'platform': serializer.toJson<String>(platform),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -290,6 +319,7 @@ class Link extends DataClass implements Insertable<Link> {
     Value<String?> imageUrl = const Value.absent(),
     Value<double?> imageWidth = const Value.absent(),
     Value<double?> imageHeight = const Value.absent(),
+    String? platform,
     DateTime? createdAt,
   }) => Link(
     id: id ?? this.id,
@@ -298,6 +328,7 @@ class Link extends DataClass implements Insertable<Link> {
     imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
     imageWidth: imageWidth.present ? imageWidth.value : this.imageWidth,
     imageHeight: imageHeight.present ? imageHeight.value : this.imageHeight,
+    platform: platform ?? this.platform,
     createdAt: createdAt ?? this.createdAt,
   );
   Link copyWithCompanion(LinksCompanion data) {
@@ -312,6 +343,7 @@ class Link extends DataClass implements Insertable<Link> {
       imageHeight: data.imageHeight.present
           ? data.imageHeight.value
           : this.imageHeight,
+      platform: data.platform.present ? data.platform.value : this.platform,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -325,14 +357,23 @@ class Link extends DataClass implements Insertable<Link> {
           ..write('imageUrl: $imageUrl, ')
           ..write('imageWidth: $imageWidth, ')
           ..write('imageHeight: $imageHeight, ')
+          ..write('platform: $platform, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, url, title, imageUrl, imageWidth, imageHeight, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    url,
+    title,
+    imageUrl,
+    imageWidth,
+    imageHeight,
+    platform,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -343,6 +384,7 @@ class Link extends DataClass implements Insertable<Link> {
           other.imageUrl == this.imageUrl &&
           other.imageWidth == this.imageWidth &&
           other.imageHeight == this.imageHeight &&
+          other.platform == this.platform &&
           other.createdAt == this.createdAt);
 }
 
@@ -353,6 +395,7 @@ class LinksCompanion extends UpdateCompanion<Link> {
   final Value<String?> imageUrl;
   final Value<double?> imageWidth;
   final Value<double?> imageHeight;
+  final Value<String> platform;
   final Value<DateTime> createdAt;
   const LinksCompanion({
     this.id = const Value.absent(),
@@ -361,6 +404,7 @@ class LinksCompanion extends UpdateCompanion<Link> {
     this.imageUrl = const Value.absent(),
     this.imageWidth = const Value.absent(),
     this.imageHeight = const Value.absent(),
+    this.platform = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   LinksCompanion.insert({
@@ -370,6 +414,7 @@ class LinksCompanion extends UpdateCompanion<Link> {
     this.imageUrl = const Value.absent(),
     this.imageWidth = const Value.absent(),
     this.imageHeight = const Value.absent(),
+    this.platform = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : url = Value(url);
   static Insertable<Link> custom({
@@ -379,6 +424,7 @@ class LinksCompanion extends UpdateCompanion<Link> {
     Expression<String>? imageUrl,
     Expression<double>? imageWidth,
     Expression<double>? imageHeight,
+    Expression<String>? platform,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -388,6 +434,7 @@ class LinksCompanion extends UpdateCompanion<Link> {
       if (imageUrl != null) 'image_url': imageUrl,
       if (imageWidth != null) 'image_width': imageWidth,
       if (imageHeight != null) 'image_height': imageHeight,
+      if (platform != null) 'platform': platform,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -399,6 +446,7 @@ class LinksCompanion extends UpdateCompanion<Link> {
     Value<String?>? imageUrl,
     Value<double?>? imageWidth,
     Value<double?>? imageHeight,
+    Value<String>? platform,
     Value<DateTime>? createdAt,
   }) {
     return LinksCompanion(
@@ -408,6 +456,7 @@ class LinksCompanion extends UpdateCompanion<Link> {
       imageUrl: imageUrl ?? this.imageUrl,
       imageWidth: imageWidth ?? this.imageWidth,
       imageHeight: imageHeight ?? this.imageHeight,
+      platform: platform ?? this.platform,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -433,6 +482,9 @@ class LinksCompanion extends UpdateCompanion<Link> {
     if (imageHeight.present) {
       map['image_height'] = Variable<double>(imageHeight.value);
     }
+    if (platform.present) {
+      map['platform'] = Variable<String>(platform.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -448,7 +500,517 @@ class LinksCompanion extends UpdateCompanion<Link> {
           ..write('imageUrl: $imageUrl, ')
           ..write('imageWidth: $imageWidth, ')
           ..write('imageHeight: $imageHeight, ')
+          ..write('platform: $platform, ')
           ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FoldersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'folders';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Folder> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Folder map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Folder(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FoldersTable createAlias(String alias) {
+    return $FoldersTable(attachedDatabase, alias);
+  }
+}
+
+class Folder extends DataClass implements Insertable<Folder> {
+  final int id;
+  final String name;
+  final DateTime createdAt;
+  const Folder({required this.id, required this.name, required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  FoldersCompanion toCompanion(bool nullToAbsent) {
+    return FoldersCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Folder.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Folder(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Folder copyWith({int? id, String? name, DateTime? createdAt}) => Folder(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Folder copyWithCompanion(FoldersCompanion data) {
+    return Folder(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Folder(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Folder &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt);
+}
+
+class FoldersCompanion extends UpdateCompanion<Folder> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<DateTime> createdAt;
+  const FoldersCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  FoldersCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.createdAt = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<Folder> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  FoldersCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<DateTime>? createdAt,
+  }) {
+    return FoldersCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FoldersCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $FolderLinksTable extends FolderLinks
+    with TableInfo<$FolderLinksTable, FolderLink> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FolderLinksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _folderIdMeta = const VerificationMeta(
+    'folderId',
+  );
+  @override
+  late final GeneratedColumn<int> folderId = GeneratedColumn<int>(
+    'folder_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES folders (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _linkIdMeta = const VerificationMeta('linkId');
+  @override
+  late final GeneratedColumn<int> linkId = GeneratedColumn<int>(
+    'link_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES links (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [folderId, linkId, addedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'folder_links';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FolderLink> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('folder_id')) {
+      context.handle(
+        _folderIdMeta,
+        folderId.isAcceptableOrUnknown(data['folder_id']!, _folderIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_folderIdMeta);
+    }
+    if (data.containsKey('link_id')) {
+      context.handle(
+        _linkIdMeta,
+        linkId.isAcceptableOrUnknown(data['link_id']!, _linkIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_linkIdMeta);
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {folderId, linkId};
+  @override
+  FolderLink map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FolderLink(
+      folderId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}folder_id'],
+      )!,
+      linkId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}link_id'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FolderLinksTable createAlias(String alias) {
+    return $FolderLinksTable(attachedDatabase, alias);
+  }
+}
+
+class FolderLink extends DataClass implements Insertable<FolderLink> {
+  final int folderId;
+  final int linkId;
+  final DateTime addedAt;
+  const FolderLink({
+    required this.folderId,
+    required this.linkId,
+    required this.addedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['folder_id'] = Variable<int>(folderId);
+    map['link_id'] = Variable<int>(linkId);
+    map['added_at'] = Variable<DateTime>(addedAt);
+    return map;
+  }
+
+  FolderLinksCompanion toCompanion(bool nullToAbsent) {
+    return FolderLinksCompanion(
+      folderId: Value(folderId),
+      linkId: Value(linkId),
+      addedAt: Value(addedAt),
+    );
+  }
+
+  factory FolderLink.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FolderLink(
+      folderId: serializer.fromJson<int>(json['folderId']),
+      linkId: serializer.fromJson<int>(json['linkId']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'folderId': serializer.toJson<int>(folderId),
+      'linkId': serializer.toJson<int>(linkId),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+    };
+  }
+
+  FolderLink copyWith({int? folderId, int? linkId, DateTime? addedAt}) =>
+      FolderLink(
+        folderId: folderId ?? this.folderId,
+        linkId: linkId ?? this.linkId,
+        addedAt: addedAt ?? this.addedAt,
+      );
+  FolderLink copyWithCompanion(FolderLinksCompanion data) {
+    return FolderLink(
+      folderId: data.folderId.present ? data.folderId.value : this.folderId,
+      linkId: data.linkId.present ? data.linkId.value : this.linkId,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FolderLink(')
+          ..write('folderId: $folderId, ')
+          ..write('linkId: $linkId, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(folderId, linkId, addedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FolderLink &&
+          other.folderId == this.folderId &&
+          other.linkId == this.linkId &&
+          other.addedAt == this.addedAt);
+}
+
+class FolderLinksCompanion extends UpdateCompanion<FolderLink> {
+  final Value<int> folderId;
+  final Value<int> linkId;
+  final Value<DateTime> addedAt;
+  final Value<int> rowid;
+  const FolderLinksCompanion({
+    this.folderId = const Value.absent(),
+    this.linkId = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  FolderLinksCompanion.insert({
+    required int folderId,
+    required int linkId,
+    this.addedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : folderId = Value(folderId),
+       linkId = Value(linkId);
+  static Insertable<FolderLink> custom({
+    Expression<int>? folderId,
+    Expression<int>? linkId,
+    Expression<DateTime>? addedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (folderId != null) 'folder_id': folderId,
+      if (linkId != null) 'link_id': linkId,
+      if (addedAt != null) 'added_at': addedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  FolderLinksCompanion copyWith({
+    Value<int>? folderId,
+    Value<int>? linkId,
+    Value<DateTime>? addedAt,
+    Value<int>? rowid,
+  }) {
+    return FolderLinksCompanion(
+      folderId: folderId ?? this.folderId,
+      linkId: linkId ?? this.linkId,
+      addedAt: addedAt ?? this.addedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (folderId.present) {
+      map['folder_id'] = Variable<int>(folderId.value);
+    }
+    if (linkId.present) {
+      map['link_id'] = Variable<int>(linkId.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FolderLinksCompanion(')
+          ..write('folderId: $folderId, ')
+          ..write('linkId: $linkId, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -458,11 +1020,34 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $LinksTable links = $LinksTable(this);
+  late final $FoldersTable folders = $FoldersTable(this);
+  late final $FolderLinksTable folderLinks = $FolderLinksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [links];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    links,
+    folders,
+    folderLinks,
+  ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'folders',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('folder_links', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'links',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('folder_links', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $$LinksTableCreateCompanionBuilder =
@@ -473,6 +1058,7 @@ typedef $$LinksTableCreateCompanionBuilder =
       Value<String?> imageUrl,
       Value<double?> imageWidth,
       Value<double?> imageHeight,
+      Value<String> platform,
       Value<DateTime> createdAt,
     });
 typedef $$LinksTableUpdateCompanionBuilder =
@@ -483,8 +1069,32 @@ typedef $$LinksTableUpdateCompanionBuilder =
       Value<String?> imageUrl,
       Value<double?> imageWidth,
       Value<double?> imageHeight,
+      Value<String> platform,
       Value<DateTime> createdAt,
     });
+
+final class $$LinksTableReferences
+    extends BaseReferences<_$AppDatabase, $LinksTable, Link> {
+  $$LinksTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$FolderLinksTable, List<FolderLink>>
+  _folderLinksRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.folderLinks,
+    aliasName: 'links__id__folder_links__link_id',
+  );
+
+  $$FolderLinksTableProcessedTableManager get folderLinksRefs {
+    final manager = $$FolderLinksTableTableManager(
+      $_db,
+      $_db.folderLinks,
+    ).filter((f) => f.linkId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_folderLinksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $$LinksTableFilterComposer extends Composer<_$AppDatabase, $LinksTable> {
   $$LinksTableFilterComposer({
@@ -524,10 +1134,40 @@ class $$LinksTableFilterComposer extends Composer<_$AppDatabase, $LinksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> folderLinksRefs(
+    Expression<bool> Function($$FolderLinksTableFilterComposer f) f,
+  ) {
+    final $$FolderLinksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.folderLinks,
+      getReferencedColumn: (t) => t.linkId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FolderLinksTableFilterComposer(
+            $db: $db,
+            $table: $db.folderLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$LinksTableOrderingComposer
@@ -569,6 +1209,11 @@ class $$LinksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get platform => $composableBuilder(
+    column: $table.platform,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -606,8 +1251,36 @@ class $$LinksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get platform =>
+      $composableBuilder(column: $table.platform, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> folderLinksRefs<T extends Object>(
+    Expression<T> Function($$FolderLinksTableAnnotationComposer a) f,
+  ) {
+    final $$FolderLinksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.folderLinks,
+      getReferencedColumn: (t) => t.linkId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FolderLinksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.folderLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$LinksTableTableManager
@@ -621,9 +1294,9 @@ class $$LinksTableTableManager
           $$LinksTableAnnotationComposer,
           $$LinksTableCreateCompanionBuilder,
           $$LinksTableUpdateCompanionBuilder,
-          (Link, BaseReferences<_$AppDatabase, $LinksTable, Link>),
+          (Link, $$LinksTableReferences),
           Link,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool folderLinksRefs})
         > {
   $$LinksTableTableManager(_$AppDatabase db, $LinksTable table)
     : super(
@@ -644,6 +1317,7 @@ class $$LinksTableTableManager
                 Value<String?> imageUrl = const Value.absent(),
                 Value<double?> imageWidth = const Value.absent(),
                 Value<double?> imageHeight = const Value.absent(),
+                Value<String> platform = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => LinksCompanion(
                 id: id,
@@ -652,6 +1326,7 @@ class $$LinksTableTableManager
                 imageUrl: imageUrl,
                 imageWidth: imageWidth,
                 imageHeight: imageHeight,
+                platform: platform,
                 createdAt: createdAt,
               ),
           createCompanionCallback:
@@ -662,6 +1337,7 @@ class $$LinksTableTableManager
                 Value<String?> imageUrl = const Value.absent(),
                 Value<double?> imageWidth = const Value.absent(),
                 Value<double?> imageHeight = const Value.absent(),
+                Value<String> platform = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => LinksCompanion.insert(
                 id: id,
@@ -670,12 +1346,37 @@ class $$LinksTableTableManager
                 imageUrl: imageUrl,
                 imageWidth: imageWidth,
                 imageHeight: imageHeight,
+                platform: platform,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) =>
+                    (e.readTable(table), $$LinksTableReferences(db, table, e)),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({folderLinksRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (folderLinksRefs) db.folderLinks],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (folderLinksRefs)
+                    await $_getPrefetchedData<Link, $LinksTable, FolderLink>(
+                      currentTable: table,
+                      referencedTable: $$LinksTableReferences
+                          ._folderLinksRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$LinksTableReferences(db, table, p0).folderLinksRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.linkId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -690,9 +1391,626 @@ typedef $$LinksTableProcessedTableManager =
       $$LinksTableAnnotationComposer,
       $$LinksTableCreateCompanionBuilder,
       $$LinksTableUpdateCompanionBuilder,
-      (Link, BaseReferences<_$AppDatabase, $LinksTable, Link>),
+      (Link, $$LinksTableReferences),
       Link,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool folderLinksRefs})
+    >;
+typedef $$FoldersTableCreateCompanionBuilder =
+    FoldersCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<DateTime> createdAt,
+    });
+typedef $$FoldersTableUpdateCompanionBuilder =
+    FoldersCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<DateTime> createdAt,
+    });
+
+final class $$FoldersTableReferences
+    extends BaseReferences<_$AppDatabase, $FoldersTable, Folder> {
+  $$FoldersTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$FolderLinksTable, List<FolderLink>>
+  _folderLinksRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.folderLinks,
+    aliasName: 'folders__id__folder_links__folder_id',
+  );
+
+  $$FolderLinksTableProcessedTableManager get folderLinksRefs {
+    final manager = $$FolderLinksTableTableManager(
+      $_db,
+      $_db.folderLinks,
+    ).filter((f) => f.folderId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_folderLinksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$FoldersTableFilterComposer
+    extends Composer<_$AppDatabase, $FoldersTable> {
+  $$FoldersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> folderLinksRefs(
+    Expression<bool> Function($$FolderLinksTableFilterComposer f) f,
+  ) {
+    final $$FolderLinksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.folderLinks,
+      getReferencedColumn: (t) => t.folderId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FolderLinksTableFilterComposer(
+            $db: $db,
+            $table: $db.folderLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$FoldersTableOrderingComposer
+    extends Composer<_$AppDatabase, $FoldersTable> {
+  $$FoldersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FoldersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FoldersTable> {
+  $$FoldersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> folderLinksRefs<T extends Object>(
+    Expression<T> Function($$FolderLinksTableAnnotationComposer a) f,
+  ) {
+    final $$FolderLinksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.folderLinks,
+      getReferencedColumn: (t) => t.folderId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FolderLinksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.folderLinks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$FoldersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FoldersTable,
+          Folder,
+          $$FoldersTableFilterComposer,
+          $$FoldersTableOrderingComposer,
+          $$FoldersTableAnnotationComposer,
+          $$FoldersTableCreateCompanionBuilder,
+          $$FoldersTableUpdateCompanionBuilder,
+          (Folder, $$FoldersTableReferences),
+          Folder,
+          PrefetchHooks Function({bool folderLinksRefs})
+        > {
+  $$FoldersTableTableManager(_$AppDatabase db, $FoldersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FoldersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FoldersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FoldersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => FoldersCompanion(id: id, name: name, createdAt: createdAt),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => FoldersCompanion.insert(
+                id: id,
+                name: name,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$FoldersTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({folderLinksRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (folderLinksRefs) db.folderLinks],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (folderLinksRefs)
+                    await $_getPrefetchedData<
+                      Folder,
+                      $FoldersTable,
+                      FolderLink
+                    >(
+                      currentTable: table,
+                      referencedTable: $$FoldersTableReferences
+                          ._folderLinksRefsTable(db),
+                      managerFromTypedResult: (p0) => $$FoldersTableReferences(
+                        db,
+                        table,
+                        p0,
+                      ).folderLinksRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.folderId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$FoldersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FoldersTable,
+      Folder,
+      $$FoldersTableFilterComposer,
+      $$FoldersTableOrderingComposer,
+      $$FoldersTableAnnotationComposer,
+      $$FoldersTableCreateCompanionBuilder,
+      $$FoldersTableUpdateCompanionBuilder,
+      (Folder, $$FoldersTableReferences),
+      Folder,
+      PrefetchHooks Function({bool folderLinksRefs})
+    >;
+typedef $$FolderLinksTableCreateCompanionBuilder =
+    FolderLinksCompanion Function({
+      required int folderId,
+      required int linkId,
+      Value<DateTime> addedAt,
+      Value<int> rowid,
+    });
+typedef $$FolderLinksTableUpdateCompanionBuilder =
+    FolderLinksCompanion Function({
+      Value<int> folderId,
+      Value<int> linkId,
+      Value<DateTime> addedAt,
+      Value<int> rowid,
+    });
+
+final class $$FolderLinksTableReferences
+    extends BaseReferences<_$AppDatabase, $FolderLinksTable, FolderLink> {
+  $$FolderLinksTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $FoldersTable _folderIdTable(_$AppDatabase db) =>
+      db.folders.createAlias('folder_links__folder_id__folders__id');
+
+  $$FoldersTableProcessedTableManager get folderId {
+    final $_column = $_itemColumn<int>('folder_id')!;
+
+    final manager = $$FoldersTableTableManager(
+      $_db,
+      $_db.folders,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_folderIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $LinksTable _linkIdTable(_$AppDatabase db) =>
+      db.links.createAlias('folder_links__link_id__links__id');
+
+  $$LinksTableProcessedTableManager get linkId {
+    final $_column = $_itemColumn<int>('link_id')!;
+
+    final manager = $$LinksTableTableManager(
+      $_db,
+      $_db.links,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_linkIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$FolderLinksTableFilterComposer
+    extends Composer<_$AppDatabase, $FolderLinksTable> {
+  $$FolderLinksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$FoldersTableFilterComposer get folderId {
+    final $$FoldersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.folderId,
+      referencedTable: $db.folders,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FoldersTableFilterComposer(
+            $db: $db,
+            $table: $db.folders,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$LinksTableFilterComposer get linkId {
+    final $$LinksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.linkId,
+      referencedTable: $db.links,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LinksTableFilterComposer(
+            $db: $db,
+            $table: $db.links,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FolderLinksTableOrderingComposer
+    extends Composer<_$AppDatabase, $FolderLinksTable> {
+  $$FolderLinksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$FoldersTableOrderingComposer get folderId {
+    final $$FoldersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.folderId,
+      referencedTable: $db.folders,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FoldersTableOrderingComposer(
+            $db: $db,
+            $table: $db.folders,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$LinksTableOrderingComposer get linkId {
+    final $$LinksTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.linkId,
+      referencedTable: $db.links,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LinksTableOrderingComposer(
+            $db: $db,
+            $table: $db.links,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FolderLinksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FolderLinksTable> {
+  $$FolderLinksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  $$FoldersTableAnnotationComposer get folderId {
+    final $$FoldersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.folderId,
+      referencedTable: $db.folders,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FoldersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.folders,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$LinksTableAnnotationComposer get linkId {
+    final $$LinksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.linkId,
+      referencedTable: $db.links,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LinksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.links,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FolderLinksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FolderLinksTable,
+          FolderLink,
+          $$FolderLinksTableFilterComposer,
+          $$FolderLinksTableOrderingComposer,
+          $$FolderLinksTableAnnotationComposer,
+          $$FolderLinksTableCreateCompanionBuilder,
+          $$FolderLinksTableUpdateCompanionBuilder,
+          (FolderLink, $$FolderLinksTableReferences),
+          FolderLink,
+          PrefetchHooks Function({bool folderId, bool linkId})
+        > {
+  $$FolderLinksTableTableManager(_$AppDatabase db, $FolderLinksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FolderLinksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FolderLinksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FolderLinksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> folderId = const Value.absent(),
+                Value<int> linkId = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FolderLinksCompanion(
+                folderId: folderId,
+                linkId: linkId,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int folderId,
+                required int linkId,
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => FolderLinksCompanion.insert(
+                folderId: folderId,
+                linkId: linkId,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$FolderLinksTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({folderId = false, linkId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (folderId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.folderId,
+                                referencedTable: $$FolderLinksTableReferences
+                                    ._folderIdTable(db),
+                                referencedColumn: $$FolderLinksTableReferences
+                                    ._folderIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+                    if (linkId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.linkId,
+                                referencedTable: $$FolderLinksTableReferences
+                                    ._linkIdTable(db),
+                                referencedColumn: $$FolderLinksTableReferences
+                                    ._linkIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$FolderLinksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FolderLinksTable,
+      FolderLink,
+      $$FolderLinksTableFilterComposer,
+      $$FolderLinksTableOrderingComposer,
+      $$FolderLinksTableAnnotationComposer,
+      $$FolderLinksTableCreateCompanionBuilder,
+      $$FolderLinksTableUpdateCompanionBuilder,
+      (FolderLink, $$FolderLinksTableReferences),
+      FolderLink,
+      PrefetchHooks Function({bool folderId, bool linkId})
     >;
 
 class $AppDatabaseManager {
@@ -700,4 +2018,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$LinksTableTableManager get links =>
       $$LinksTableTableManager(_db, _db.links);
+  $$FoldersTableTableManager get folders =>
+      $$FoldersTableTableManager(_db, _db.folders);
+  $$FolderLinksTableTableManager get folderLinks =>
+      $$FolderLinksTableTableManager(_db, _db.folderLinks);
 }
