@@ -80,11 +80,11 @@ class LinkRepository {
   }
 
   /// Get ALL links ordered by creation date (newest first)
-  // Future<List<Link>> getAllLinks() {
-  //   return (_db.select(_db.links)
-  //     ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-  //       .get();
-  // }
+  Future<List<Link>> getAllLinks() {
+    return (_db.select(_db.links)
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
+  }
 
 
 
