@@ -4,6 +4,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:mindly/feature/feed/presentation/widgets/feed_app_bar.dart';
 import 'package:mindly/feature/feed/presentation/widgets/filter_chips_panel.dart';
 import 'package:mindly/feature/feed/presentation/widgets/link_card.dart';
+import 'package:mindly/feature/feed/presentation/widgets/add_link_bottom_sheet.dart';
 import '../../../core/theme/colors.dart';
 import '../data/link_repository.dart';
 import 'bloc/feed_cubit.dart';
@@ -27,6 +28,7 @@ class _FeedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<FeedCubit>().state;
+    final cubit = context.read<FeedCubit>();
     final hasActiveFilter =
         state is FeedSuccess && state.selectedFilter != 'All';
     final isSearchingState =
@@ -35,13 +37,13 @@ class _FeedView extends StatelessWidget {
     return Column(
       children: [
         CustomAppBar(
-          onSearchChanged: (query) => context.read<FeedCubit>().search(query),
+          onSearchChanged: (query) => cubit.search(query),
           onSearchFocusChanged: (focused) =>
-              context.read<FeedCubit>().isSearching(focused),
+              cubit.isSearching(focused),
           onAddButtonTap: () {
-            // TODO: navigate to create-link/note screen
+            AddLinkBottomSheet.show(context, (url) => cubit.addLink(url));
           },
-          onClearFilter: () => context.read<FeedCubit>().selectFilter('All'),
+          onClearFilter: () => cubit.selectFilter('All'),
           isSearchingState: isSearchingState,
           hasActiveFilter: hasActiveFilter,
         ),

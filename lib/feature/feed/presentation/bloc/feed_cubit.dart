@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindly/feature/feed/data/link_repository.dart';
 import 'package:mindly/core/database/app_database.dart';
 import 'package:mindly/feature/feed/presentation/bloc/feed_state.dart';
+import '../../../../core/services/metadata_service.dart';
+import '../../../../core/utils/platform_detector.dart';
 
 
 class FeedCubit extends Cubit<FeedState> {
   final LinkRepository linkRepository;
+  final _metadataService = MetadataService();
   StreamSubscription? linksSubscription;
 
   FeedCubit(this.linkRepository) : super(const FeedInitial()) {
@@ -125,6 +128,35 @@ class FeedCubit extends Cubit<FeedState> {
     if (_lastDeletedLink == null) return;
     await linkRepository.restoreLink(_lastDeletedLink!);
     _lastDeletedLink = null;
+  }
+
+  Future<void> addLink(String url) async {
+    try {
+      final platform = PlatformDetector.detect(url);
+      final linkId = await linkRepository.saveLink(
+        url: url,
+        platform: platform,
+      );
+
+      _fetchAndUpdateMetadataAsync(linkId, url);
+    } catch (e) {
+      print('❌ Error adding link: $e');
+    }
+  }
+
+  void _fetchAndUpdateMetadataAsync(int linkId, String url) async {
+    try {
+      final meta = await _metadataService.fetch(url);
+      await linkRepository.updateMetadata(
+        id: linkId,
+        title: meta.title,
+        imageUrl: meta.imageUrl,
+        imageHeight: meta.imageHeight,
+        imageWidth: meta.imageWidth,
+      );
+    } catch (e) {
+      print('⚠️ Error fetching metadata: $e');
+    }
   }
 
 
