@@ -119,8 +119,8 @@ class _LinkDetailScreenState extends State<LinkDetailScreen> {
                     onTap: () => context.pop(),
                   ),
                   const Spacer(),
-                  if (link.platform != null && link.platform!.isNotEmpty)
-                    _PlatformBadge(platform: link.platform!),
+                  if (link.platform.isNotEmpty)
+                    _PlatformBadge(platform: link.platform),
                 ],
               ),
             ),

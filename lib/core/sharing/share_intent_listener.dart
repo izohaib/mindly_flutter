@@ -3,15 +3,8 @@ import 'package:mindly/core/services/metadata_service.dart';
 import 'package:mindly/feature/feed/data/link_repository.dart';
 import 'dart:async';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
-
 import '../utils/platform_detector.dart';
 
-import 'package:flutter/material.dart';
-import 'package:mindly/core/services/metadata_service.dart';
-import 'package:mindly/core/utils/platform_detector.dart';
-import 'package:mindly/feature/feed/data/link_repository.dart';
-import 'dart:async';
-import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 class ShareIntentListener extends StatefulWidget {
   final Widget child;

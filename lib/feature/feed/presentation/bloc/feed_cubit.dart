@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindly/feature/feed/data/link_repository.dart';
 import 'package:mindly/core/database/app_database.dart';
 import 'package:mindly/feature/feed/presentation/bloc/feed_state.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 
 class FeedCubit extends Cubit<FeedState> {
   final LinkRepository linkRepository;

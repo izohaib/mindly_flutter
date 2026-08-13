@@ -67,17 +67,17 @@ class CustomAppBarState extends State<CustomAppBar> {
                 ),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        color: AppColors.onBackground,
-                        size: 20,
-                      ),
-                      onPressed: () => Scaffold.of(context).openDrawer(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      splashRadius: 18,
-                    ),
+                    // IconButton(
+                    //   icon: const Icon(
+                    //     Icons.menu,
+                    //     color: AppColors.onBackground,
+                    //     size: 20,
+                    //   ),
+                    //   onPressed: () => Scaffold.of(context).openDrawer(),
+                    //   padding: EdgeInsets.zero,
+                    //   constraints: const BoxConstraints(),
+                    //   splashRadius: 18,
+                    // ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
