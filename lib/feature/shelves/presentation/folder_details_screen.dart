@@ -5,10 +5,15 @@ import '../../feed/presentation/widgets/link_card.dart';
 import 'bloc/folders_cubit.dart';
 import 'bloc/folders_state.dart';
 
-
 class FolderDetailScreen extends StatefulWidget {
   final int folderId;
-  const FolderDetailScreen({super.key, required this.folderId});
+  final String folderName;
+
+  const FolderDetailScreen({
+    super.key,
+    required this.folderId,
+    required this.folderName,
+  });
 
   @override
   State<FolderDetailScreen> createState() => _FolderDetailScreenState();
@@ -30,7 +35,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Folder')),
+      appBar: AppBar(title: Text(widget.folderName)),
       body: BlocBuilder<FoldersCubit, FoldersState>(
         builder: (context, state) {
           if (state is! FoldersSuccess) {

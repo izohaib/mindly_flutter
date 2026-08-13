@@ -9,12 +9,12 @@ class FoldersCubit extends Cubit<FoldersState> {
   StreamSubscription? _folderLinksSubscription;
 
   FoldersCubit(this.foldersRepository) : super(const FoldersInitial()) {
-    _listenToFolders();
+    _listenToFoldersWithData();
   }
 
-  void _listenToFolders() {
+  void _listenToFoldersWithData() {
     emit(const FoldersLoading());
-    _foldersSubscription = foldersRepository.watchAllFolders().listen(
+    _foldersSubscription = foldersRepository.watchAllFoldersWithDetails().listen(
           (folders) {
         if (state is FoldersSuccess) {
           emit((state as FoldersSuccess).copyWith(folders: folders));
@@ -35,7 +35,6 @@ class FoldersCubit extends Cubit<FoldersState> {
     await foldersRepository.deleteFolder(folderId);
   }
 
-  /// Call when opening a folder's detail screen
   void openFolder(int folderId) {
     if (state is! FoldersSuccess) return;
     final currentState = state as FoldersSuccess;
@@ -51,7 +50,6 @@ class FoldersCubit extends Cubit<FoldersState> {
         });
   }
 
-  /// Call when leaving the folder detail screen
   void closeFolder() {
     _folderLinksSubscription?.cancel();
     _folderLinksSubscription = null;
@@ -66,6 +64,32 @@ class FoldersCubit extends Cubit<FoldersState> {
 
   Future<void> removeLinkFromFolder(int linkId, int folderId) async {
     await foldersRepository.removeLinkFromFolder(linkId, folderId);
+  }
+
+  /// Call when opening a link's detail screen, loads which folders it already belongs to
+  Future<void> loadFoldersForLink(int linkId) async {
+    if (state is! FoldersSuccess) return;
+    final currentState = state as FoldersSuccess;
+
+    final linkFolders = await foldersRepository.getFoldersForLink(linkId);
+
+    emit(currentState.copyWith(linkFolderIds: linkFolders.map((f) => f.id).toSet()));
+  }
+
+  /// Toggle a folder on/off for a given link, used by the folder popover on detail screen
+  Future<void> toggleLinkFolder(int linkId, int folderId) async {
+    if (state is! FoldersSuccess) return;
+    final currentState = state as FoldersSuccess;
+
+    final isSelected = currentState.linkFolderIds.contains(folderId);
+    final updatedIds = Set<int>.from(currentState.linkFolderIds);
+    isSelected ? updatedIds.remove(folderId) : updatedIds.add(folderId);
+
+    emit(currentState.copyWith(linkFolderIds: updatedIds));
+
+    isSelected
+        ? await removeLinkFromFolder(linkId, folderId)
+        : await addLinkToFolder(linkId, folderId);
   }
 
   @override

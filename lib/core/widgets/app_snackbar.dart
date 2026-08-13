@@ -9,7 +9,7 @@ class AppSnackbar {
        {
         required String message,
         AppSnackbarType type = AppSnackbarType.info,
-        Duration duration = const Duration(seconds: 6),
+        Duration duration = const Duration(seconds: 5),
         VoidCallback? onUndo,
       }) {
 

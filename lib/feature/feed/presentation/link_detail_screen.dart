@@ -2,17 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mindly/core/router/app_router.dart';
 import 'package:mindly/feature/feed/presentation/bloc/feed_cubit.dart';
 import 'package:mindly/core/database/app_database.dart';
+import 'package:mindly/feature/feed/presentation/widgets/action_pill.dart';
+import 'package:mindly/feature/feed/presentation/widgets/folder_popover_button.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/utils/utils.dart';
 import '../../../core/widgets/app_snackbar.dart';
-import '../../shelves/presenation/widgets/folder_picker_sheet.dart';
+import 'dart:async';
+import '../../shelves/presentation/bloc/folders_cubit.dart';
+import '../../shelves/presentation/bloc/folders_state.dart';
 
-class LinkDetailScreen extends StatelessWidget {
+class LinkDetailScreen extends StatefulWidget {
   final Link link;
+
   const LinkDetailScreen({super.key, required this.link});
+
+  @override
+  State<LinkDetailScreen> createState() => _LinkDetailScreenState();
+}
+
+class _LinkDetailScreenState extends State<LinkDetailScreen> {
+  Link get link => widget.link;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<FoldersCubit>().loadFoldersForLink(link.id);
+  }
 
   Future<void> _deleteLink(BuildContext context) async {
     final cubit = context.read<FeedCubit>();
@@ -23,7 +40,6 @@ class LinkDetailScreen extends StatelessWidget {
     context.pop();
 
     AppSnackbar.show(
-
       message: 'Link deleted',
       type: AppSnackbarType.success,
       onUndo: () => cubit.undoDelete(),
@@ -33,17 +49,11 @@ class LinkDetailScreen extends StatelessWidget {
   Future<void> _openOnPlatform(BuildContext context) async {
     final launched = await Utils.openExternalUrl(link.url);
     if (!launched && context.mounted) {
-      AppSnackbar.show( message: 'Could not open link', type: AppSnackbarType.error);
+      AppSnackbar.show(
+        message: 'Could not open link',
+        type: AppSnackbarType.error,
+      );
     }
-  }
-
-  void _openFolderPicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => FolderPickerSheet(linkId: link.id),
-    );
   }
 
   void _copyUrl(BuildContext context) {
@@ -73,8 +83,18 @@ class LinkDetailScreen extends StatelessWidget {
     if (diff == 1) return 'Added yesterday';
 
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return 'Added on ${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -143,27 +163,28 @@ class LinkDetailScreen extends StatelessWidget {
                       onTap: () => _openOnPlatform(context),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(18),
-                        child: (link.imageUrl != null && link.imageUrl!.isNotEmpty)
+                        child:
+                            (link.imageUrl != null && link.imageUrl!.isNotEmpty)
                             ? Image.network(
-                          link.imageUrl!,
-                          width: double.infinity,
-                          height: imageHeight,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            height: imageHeight,
-                            color: AppColors.surfaceElevated,
-                            child: const Center(
-                              child: Icon(Icons.image_not_supported),
-                            ),
-                          ),
-                        )
+                                link.imageUrl!,
+                                width: double.infinity,
+                                height: imageHeight,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  height: imageHeight,
+                                  color: AppColors.surfaceElevated,
+                                  child: const Center(
+                                    child: Icon(Icons.image_not_supported),
+                                  ),
+                                ),
+                              )
                             : Container(
-                          height: imageHeight,
-                          color: AppColors.surfaceElevated,
-                          child: const Center(
-                            child: Icon(Icons.link, size: 40),
-                          ),
-                        ),
+                                height: imageHeight,
+                                color: AppColors.surfaceElevated,
+                                child: const Center(
+                                  child: Icon(Icons.link, size: 40),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -178,7 +199,11 @@ class LinkDetailScreen extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.link_rounded, size: 18, color: AppColors.textSecondary),
+                          const Icon(
+                            Icons.link_rounded,
+                            size: 18,
+                            color: AppColors.textSecondary,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -195,7 +220,11 @@ class LinkDetailScreen extends StatelessWidget {
                             onTap: () => _copyUrl(context),
                             child: const Padding(
                               padding: EdgeInsets.only(left: 8),
-                              child: Icon(Icons.copy_rounded, size: 17, color: AppColors.primary),
+                              child: Icon(
+                                Icons.copy_rounded,
+                                size: 17,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
                         ],
@@ -213,7 +242,7 @@ class LinkDetailScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: _ActionPill(
+                    child: ActionPill(
                       icon: Icons.delete_outline_rounded,
                       label: 'Delete',
                       color: const Color(0xFFE05252),
@@ -222,23 +251,46 @@ class LinkDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _ActionPill(
+                    child: ActionPill(
                       icon: Icons.share_outlined,
                       label: 'Share',
                       color: AppColors.textPrimary,
                       onTap: () {
-                        // share_plus implementation later
+                        // share_plus implementation
                       },
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: _ActionPill(
-                      icon: Icons.folder_outlined,
-                      label: 'Folder',
-                      color: AppColors.textPrimary,
-                      onTap: () => _openFolderPicker(context),
-                    ),
+                  BlocBuilder<FoldersCubit, FoldersState>(
+                    builder: (context, state) {
+                      final allFolders = state is FoldersSuccess
+                          ? state.folders.map((folder) {
+                              return folder.folder;
+                            }).toList()
+                          : <Folder>[];
+
+                      final selectedIds = state is FoldersSuccess
+                          ? state.linkFolderIds
+                          : <int>{};
+
+                      return Expanded(
+                        child: FolderPopoverButton(
+                          folders: allFolders,
+                          selectedFolderIds: selectedIds,
+                          onToggleFolder: (folderId) {
+                            context.read<FoldersCubit>().toggleLinkFolder(
+                              link.id,
+                              folderId,
+                            );
+                          },
+                          child: ActionPill(
+                            icon: Icons.folder_outlined,
+                            label: 'Folder',
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -269,7 +321,6 @@ class LinkDetailScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 18),
-
           ],
         ),
       ),
@@ -302,6 +353,7 @@ class _CircleIconButton extends StatelessWidget {
 
 class _PlatformBadge extends StatelessWidget {
   final String platform;
+
   const _PlatformBadge({required this.platform});
 
   @override
@@ -318,50 +370,6 @@ class _PlatformBadge extends StatelessWidget {
           fontSize: 11.5,
           fontWeight: FontWeight.w700,
           color: AppColors.primary,
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionPill({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
