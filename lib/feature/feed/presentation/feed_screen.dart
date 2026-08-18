@@ -15,10 +15,7 @@ class FeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => FeedCubit(LinkRepository.instance),
-      child: const _FeedView(),
-    );
+    return const _FeedView();
   }
 }
 

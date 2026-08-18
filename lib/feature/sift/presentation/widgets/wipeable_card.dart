@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mindly/core/database/app_database.dart';
+import 'package:mindly/core/theme/colors.dart';
 
 class SwipeableCard extends StatefulWidget {
   final Link link;
@@ -27,8 +29,8 @@ class SwipeableCardState extends State<SwipeableCard>
   Offset _dragOffset = Offset.zero;
   double _angle = 0;
 
-  static const double _swipeThreshold = 120;
-  static const double _cardRadius = 24;
+  static const double _swipeThreshold = 140;
+  static const double _cardRadius = 32;
 
   @override
   void initState() {
@@ -36,7 +38,7 @@ class SwipeableCardState extends State<SwipeableCard>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 400),
     )..addListener(() {
       if (_flyAnimation != null) {
         setState(() {
@@ -57,7 +59,7 @@ class SwipeableCardState extends State<SwipeableCard>
 
     setState(() {
       _dragOffset += details.delta;
-      _angle = (_dragOffset.dx / 300).clamp(-0.4, 0.4);
+      _angle = (_dragOffset.dx / 400).clamp(-0.25, 0.25);
     });
   }
 
@@ -77,32 +79,22 @@ class SwipeableCardState extends State<SwipeableCard>
 
   void swipeLeft() {
     if (!widget.isFront) return;
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    _flingCard(screenWidth, isRight: false);
+    _flingCard(MediaQuery.of(context).size.width, isRight: false);
   }
 
   void swipeRight() {
     if (!widget.isFront) return;
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    _flingCard(screenWidth, isRight: true);
+    _flingCard(MediaQuery.of(context).size.width, isRight: true);
   }
 
-  void _flingCard(
-      double screenWidth, {
-        required bool isRight,
-      }) {
-    final endX = isRight ? screenWidth * 1.5 : -screenWidth * 1.5;
+  void _flingCard(double screenWidth, {required bool isRight}) {
+    final endX = isRight ? screenWidth * 2.0 : -screenWidth * 1.8;
 
     _flyAnimation = Tween<Offset>(
       begin: _dragOffset,
-      end: Offset(endX, _dragOffset.dy),
+      end: Offset(endX, _dragOffset.dy + 40),
     ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
 
     _controller.forward(from: 0).then((_) {
@@ -115,26 +107,17 @@ class SwipeableCardState extends State<SwipeableCard>
       begin: _dragOffset,
       end: Offset.zero,
     ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
     );
 
     _controller.forward(from: 0).then((_) {
-      if (mounted) {
-        setState(() {
-          _angle = 0;
-        });
-      }
+      if (mounted) setState(() => _angle = 0);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final progress =
-    (_dragOffset.dx / _swipeThreshold).clamp(-1.0, 1.0);
-
+    final progress = (_dragOffset.dx / _swipeThreshold).clamp(-1.0, 1.0);
     final isKeepSide = progress > 0;
     final strength = progress.abs();
 
@@ -145,42 +128,37 @@ class SwipeableCardState extends State<SwipeableCard>
         offset: _dragOffset,
         child: Transform.rotate(
           angle: _angle,
-          child: _buildCard(
-            context,
-            isKeepSide: isKeepSide,
-            strength: strength,
-          ),
+          child: _buildCard(context, isKeepSide: isKeepSide, strength: strength),
         ),
       ),
     );
   }
 
-  Widget _buildCard(
-      BuildContext context, {
-        required bool isKeepSide,
-        required double strength,
-      }) {
+  Widget _buildCard(BuildContext context, {required bool isKeepSide, required double strength}) {
     final link = widget.link;
-    final feedbackColor = isKeepSide ? Colors.green : Colors.red;
-    final showFeedback = widget.isFront && strength > 0;
+    final actionColor = isKeepSide ? AppColors.secondary : AppColors.error;
+    
+    // Smooth interpolation for the border glow
+    final glowColor = actionColor.withValues(alpha: 0.6 * strength);
+    final overlayColor = actionColor.withValues(alpha: 0.25 * strength);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 100),
       width: MediaQuery.of(context).size.width * 0.9,
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.72,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(_cardRadius),
-        border: Border.all(
-          color: showFeedback
-              ? feedbackColor
-              : Colors.transparent,
-          width: 5,
-        ),
         boxShadow: [
+          // Dynamic Glowing Border
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            color: glowColor,
+            blurRadius: 20 * strength,
+            spreadRadius: 2 * strength,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
           ),
         ],
       ),
@@ -189,174 +167,121 @@ class SwipeableCardState extends State<SwipeableCard>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Card content
-            Container(
-              color: Colors.white,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        link.imageUrl != null
-                            ? Image.network(
-                          link.imageUrl!,
-                          fit: BoxFit.cover,
-                          loadingBuilder:
-                              (context, child, progress) {
-                            return progress == null
-                                ? child
-                                : Container(
-                              color: Colors.grey.shade200,
-                              child: const Center(
-                                child:
-                                CircularProgressIndicator(),
-                              ),
-                            );
-                          },
-                          errorBuilder:
-                              (context, error, stack) {
-                            return Container(
-                              color: Colors.grey.shade200,
-                              child: const Center(
-                                child: Icon(
-                                  Icons.link,
-                                  size: 48,
-                                ),
-                              ),
-                            );
-                          },
-                        )
-                            : Container(
-                          color: Colors.grey.shade200,
-                          child: const Center(
-                            child: Icon(
-                              Icons.link,
-                              size: 48,
-                            ),
-                          ),
-                        ),
+            // 1. Long Background Image (Full height)
+            _buildImage(link),
 
-                        if (showFeedback)
-                          Container(
-                            color: feedbackColor.withOpacity(
-                              0.18 * strength,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(
-                      16,
-                      12,
-                      16,
-                      16,
-                    ),
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.1),
-                            borderRadius:
-                            BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            link.platform,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          link.title ?? link.url,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Keep/Delete indicator
-            if (showFeedback)
-              Positioned(
-                top: 20,
-                right: 20,
-                child: Transform.rotate(
-                  angle: isKeepSide ? 0.15 : -0.15,
-                  child: _actionIndicator(
-                    icon: isKeepSide
-                        ? Icons.bookmark_rounded
-                        : Icons.delete_rounded,
-                    color: feedbackColor,
-                    strength: strength,
+            // 2. Dark/Glow Overlay
+            Positioned.fill(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      overlayColor,
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.9),
+                    ],
+                    stops: const [0.0, 0.4, 1.0],
                   ),
                 ),
               ),
+            ),
+
+            // 3. Information Section (Minimalist & Bottom Aligned)
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Platform Badge (Ultra-clean)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                      ),
+                      child: Text(
+                        link.platform.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white70,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Title (Bold & Cinematic)
+                    Text(
+                      link.title ?? 'UNTITLED LINK',
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.1,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Visual Hint of direction
+                    Row(
+                      children: [
+                        Icon(
+                          isKeepSide ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
+                          color: actionColor.withValues(alpha: 0.8 * strength + 0.2),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          isKeepSide ? 'KEEP THIS' : 'DELETE THIS',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: actionColor.withValues(alpha: 0.8 * strength + 0.2),
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _actionIndicator({
-    required IconData icon,
-    required Color color,
-    required double strength,
-  }) {
-    final scale = (0.7 + (0.3 * strength)).clamp(0.7, 1.0);
+  Widget _buildImage(Link link) {
+    if (link.imageUrl != null && link.imageUrl!.isNotEmpty) {
+      return Image.network(
+        link.imageUrl!,
+        fit: BoxFit.cover,
+        alignment: Alignment.center,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return Container(color: AppColors.surfaceVariant);
+        },
+        errorBuilder: (context, error, stack) => _placeholder(),
+      );
+    }
+    return _placeholder();
+  }
 
-    return Opacity(
-      opacity: strength.clamp(0.0, 1.0),
-      child: Transform.scale(
-        scale: scale,
-        child: Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 34,
-          ),
-        ),
+  Widget _placeholder() {
+    return Container(
+      color: AppColors.surfaceVariant,
+      child: Center(
+        child: Icon(Icons.broken_image_outlined, color: Colors.white.withValues(alpha: 0.1), size: 80),
       ),
     );
   }

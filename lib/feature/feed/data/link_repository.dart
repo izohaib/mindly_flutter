@@ -21,6 +21,20 @@ class LinkRepository {
     return rowId;
   }
 
+  Future<void> insertAllMockData(List<LinksCompanion> links) async {
+    await _db.batch((batch) {
+      batch.insertAll(_db.links, links);
+    });
+  }
+
+  // count rows if 0 database empty
+  Future<bool> isDatabaseEmpty() async {
+    final countExp = _db.links.id.count();
+    final query = _db.selectOnly(_db.links)..addColumns([countExp]);
+    final result = await query.getSingle();
+    return (result.read(countExp) ?? 0) == 0;
+  }
+
 
   /// Update metadata AFTER link is saved
   /// This can be async and doesn't block the user

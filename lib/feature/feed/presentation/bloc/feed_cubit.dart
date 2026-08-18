@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindly/feature/feed/data/link_repository.dart';
 import 'package:mindly/core/database/app_database.dart';
+import 'package:mindly/feature/feed/data/mock_data.dart';
 import 'package:mindly/feature/feed/presentation/bloc/feed_state.dart';
 import '../../../../core/services/metadata_service.dart';
 import '../../../../core/utils/platform_detector.dart';
@@ -13,7 +14,14 @@ class FeedCubit extends Cubit<FeedState> {
   StreamSubscription? linksSubscription;
 
   FeedCubit(this.linkRepository) : super(const FeedInitial()) {
-    _listenToAllLinkChanges();
+    _checkAndSeedData().then((_) => _listenToAllLinkChanges());
+  }
+
+  Future<void> _checkAndSeedData() async {
+    final isEmpty = await linkRepository.isDatabaseEmpty();
+    if (isEmpty) {
+      await linkRepository.insertAllMockData(MockData.initialLinks);
+    }
   }
 
   void _listenToAllLinkChanges() {
