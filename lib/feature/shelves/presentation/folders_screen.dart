@@ -134,6 +134,8 @@ class ShelvesScreen extends StatelessWidget {
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 2),
+
+                        if(data.linkCount != 0)
                         Text(
                           '${data.linkCount} ${data.linkCount == 1
                               ? 'link'

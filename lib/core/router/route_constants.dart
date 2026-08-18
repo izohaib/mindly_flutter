@@ -1,4 +1,7 @@
 class RouteConstants {
+  // Splash screen route
+  static const String splash = '/';
+
   // Feed screen routes
   static const String feed = '/feed';
   static const String linkDetail = '$feed/link-detail';

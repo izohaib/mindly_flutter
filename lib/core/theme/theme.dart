@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'colors.dart';
 
@@ -57,6 +58,12 @@ class AppTheme {
         backgroundColor: AppColors.background,
         elevation: 0,
         foregroundColor: AppColors.onBackground,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light, // Light icons for dark theme
+          systemNavigationBarColor: AppColors.background,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
       ),
 
       cardTheme: CardThemeData(

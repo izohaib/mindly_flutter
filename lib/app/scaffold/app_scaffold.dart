@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mindly/app/scaffold/bottom_navbar.dart';
 
@@ -10,9 +11,16 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      body: navigationShell,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        extendBody: true,
+        body: navigationShell,
       bottomNavigationBar: BottomNavbar(
         currentIndex: navigationShell.currentIndex,
         onTap: (index) => navigationShell.goBranch(
@@ -20,6 +28,6 @@ class AppScaffold extends StatelessWidget {
           initialLocation: index == navigationShell.currentIndex,
         ),
       ),
-    );
+    ));
   }
 }

@@ -8,6 +8,7 @@ import '../../feature/feed/presentation/feed_screen.dart';
 import '../../feature/shelves/presentation/folder_details_screen.dart';
 import '../../feature/shelves/presentation/folders_screen.dart';
 import '../../feature/sift/presentation/sift_screen.dart';
+import '../../feature/splash/presentation/splash_screen.dart';
 
 final GlobalKey<ScaffoldMessengerState> appScaffoldMessengerKey =
 GlobalKey<ScaffoldMessengerState>();
@@ -18,8 +19,12 @@ class AppRouter {
 
   static GoRouter router = GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: RouteConstants.feed,
+    initialLocation: RouteConstants.splash,
     routes: [
+      GoRoute(
+        path: RouteConstants.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppScaffold(navigationShell: navigationShell);
