@@ -18,7 +18,7 @@ class SiftCubit extends Cubit<SiftState> {
           : SiftLoaded(links: links, currentIndex: 0));
     } catch (e) {
       emit(SiftError('Failed to load links'));
-    }
+  }
   }
 
   /// Swipe left = delete

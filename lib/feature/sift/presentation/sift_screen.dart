@@ -1,9 +1,12 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindly/core/theme/colors.dart';
 import 'package:mindly/feature/sift/presentation/sift_cubit/sift_cubit.dart';
 import 'package:mindly/feature/sift/presentation/sift_cubit/sift_state.dart';
+import 'package:mindly/feature/sift/presentation/widgets/bg_painter.dart';
+import 'package:mindly/feature/sift/presentation/widgets/build_progress_dots.dart';
+import 'package:mindly/feature/sift/presentation/widgets/empty_state.dart';
+import 'package:mindly/feature/sift/presentation/widgets/remaining_indicator.dart';
 import 'package:mindly/feature/sift/presentation/widgets/wipeable_card.dart';
 
 class SiftScreen extends StatelessWidget {
@@ -25,7 +28,8 @@ class _SiftView extends StatefulWidget {
   State<_SiftView> createState() => _SiftViewState();
 }
 
-class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixin {
+class _SiftViewState extends State<_SiftView>
+    with SingleTickerProviderStateMixin {
   late AnimationController _bgController;
 
   @override
@@ -33,7 +37,7 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
     super.initState();
     _bgController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 20),
+      duration: const Duration(seconds: 6),
     )..repeat();
   }
 
@@ -47,6 +51,7 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+
       body: Stack(
         children: [
           // 1. Background Aura
@@ -65,11 +70,36 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
           BlocBuilder<SiftCubit, SiftState>(
             builder: (context, state) {
               if (state is SiftLoading) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(
+                        color: AppColors.primary,
+                        strokeWidth: 2,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'SYNCING MIND...',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.primary.withValues(alpha: 0.5),
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 4,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               }
+
               if (state is SiftLoaded) {
                 if (state.isFinished) {
-                  return _buildEmptyState(context, 'INBOX CLEAR', Icons.auto_awesome_rounded);
+                  return AnimatedEmptyState(
+                    title: 'INBOX CLEAR',
+                    icon: Icons.auto_awesome_rounded,
+                    onRefresh: () => context.read<SiftCubit>().loadLinks(),
+                  );
                 }
 
                 final visibleLinks = state.links
@@ -82,7 +112,7 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
                 return SafeArea(
                   child: Column(
                     children: [
-                      // Cinematic Header
+                      // Header
                       Padding(
                         padding: const EdgeInsets.fromLTRB(32, 24, 32, 8),
                         child: Row(
@@ -94,25 +124,27 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
                                 Text(
                                   'SIFT',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w900,
                                     color: AppColors.primary,
-                                    letterSpacing: 8,
+                                    letterSpacing: 4,
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                SizedBox(height: 2),
                                 Text(
-                                  'Review your mind',
+                                  'Filter the noise',
                                   style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
                                     color: Colors.white,
-                                    letterSpacing: -0.5,
+                                    letterSpacing: -1.0,
                                   ),
                                 ),
                               ],
                             ),
-                            _remainingIndicator(state.links.length - state.currentIndex),
+                            remainingIndicator(
+                              state.links.length - state.currentIndex,
+                            ),
                           ],
                         ),
                       ),
@@ -127,7 +159,8 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
                               final index = entry.key;
                               final link = entry.value;
                               final isFront = link == state.currentLink;
-                              final isBackground = index == 0 && visibleLinks.length > 1;
+                              final isBackground =
+                                  index == 0 && visibleLinks.length > 1;
 
                               return AnimatedContainer(
                                 duration: const Duration(milliseconds: 400),
@@ -139,8 +172,10 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
                                   key: ValueKey(link.id),
                                   link: link,
                                   isFront: isFront,
-                                  onSwipeLeft: () => context.read<SiftCubit>().deleteCurrent(),
-                                  onSwipeRight: () => context.read<SiftCubit>().keepCurrent(),
+                                  onSwipeLeft: () =>
+                                      context.read<SiftCubit>().deleteCurrent(),
+                                  onSwipeRight: () =>
+                                      context.read<SiftCubit>().keepCurrent(),
                                 ),
                               );
                             }).toList(),
@@ -151,7 +186,7 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
                       // Footer: Status Dots
                       Padding(
                         padding: const EdgeInsets.only(bottom: 60, top: 20),
-                        child: _buildProgressDots(
+                        child: buildProgressDots(
                           total: state.links.length,
                           current: state.currentIndex,
                         ),
@@ -160,9 +195,21 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
                   ),
                 );
               }
-              
+
               if (state is SiftEmpty) {
-                return _buildEmptyState(context, 'EMPTY INBOX', Icons.inbox_outlined);
+                return AnimatedEmptyState(
+                  title: 'EMPTY INBOX',
+                  icon: Icons.inbox_outlined,
+                  onRefresh: () => context.read<SiftCubit>().loadLinks(),
+                );
+              }
+
+              if (state is SiftError) {
+                return AnimatedEmptyState(
+                  title: 'ERROR LOAD',
+                  icon: Icons.error_outline_rounded,
+                  onRefresh: () => context.read<SiftCubit>().loadLinks(),
+                );
               }
 
               return const SizedBox.shrink();
@@ -172,125 +219,5 @@ class _SiftViewState extends State<_SiftView> with SingleTickerProviderStateMixi
       ),
     );
   }
-
-  Widget _remainingIndicator(int count) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.layers_outlined, color: AppColors.primary, size: 16),
-          const SizedBox(width: 8),
-          Text(
-            '$count',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              fontFeatures: [FontFeature.tabularFigures()],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressDots({required int total, required int current}) {
-    final displayCount = total > 10 ? 10 : total;
-    
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(displayCount, (index) {
-        final isActive = index == (current % displayCount);
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: isActive ? 24 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: isActive ? AppColors.primary : Colors.white24,
-            borderRadius: BorderRadius.circular(4),
-            boxShadow: isActive ? [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.4),
-                blurRadius: 10,
-                spreadRadius: 1,
-              )
-            ] : null,
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, String title, IconData icon) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.03),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            ),
-            child: Icon(icon, size: 64, color: Colors.white24),
-          ),
-          const SizedBox(height: 32),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.white54,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 4,
-            ),
-          ),
-          const SizedBox(height: 48),
-          FilledButton.icon(
-            onPressed: () => context.read<SiftCubit>().loadLinks(),
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('REFRESH INBOX'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-class SiftBgPainter extends CustomPainter {
-  final double animationValue;
-  SiftBgPainter({required this.animationValue});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 120);
-    final phase = animationValue * 2 * math.pi;
-
-    canvas.drawCircle(
-      Offset(size.width * 0.1, size.height * (0.2 + 0.1 * math.sin(phase))),
-      200,
-      paint..color = AppColors.primary.withValues(alpha: 0.12),
-    );
-
-    canvas.drawCircle(
-      Offset(size.width * 0.9, size.height * (0.8 + 0.1 * math.cos(phase))),
-      250,
-      paint..color = AppColors.secondary.withValues(alpha: 0.08),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant SiftBgPainter oldDelegate) => true;
-}

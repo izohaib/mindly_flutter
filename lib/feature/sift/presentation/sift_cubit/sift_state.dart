@@ -10,9 +10,10 @@ class SiftLoaded extends SiftState {
 
   SiftLoaded({required this.links, required this.currentIndex});
 
+  bool get isFinished => currentIndex >= links.length;
+
   Link? get currentLink =>
       currentIndex < links.length ? links[currentIndex] : null;
-  bool get isFinished => currentIndex >= links.length;
 
   SiftLoaded copyWith({List<Link>? links, int? currentIndex}) {
     return SiftLoaded(

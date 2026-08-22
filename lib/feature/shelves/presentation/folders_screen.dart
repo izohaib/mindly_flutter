@@ -45,7 +45,7 @@ class ShelvesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Shelves',
+          'Folders',
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w500,
